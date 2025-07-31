@@ -8,6 +8,8 @@ from sqlalchemy import text
 import logfire
 from app.config import create_db_and_tables, engine
 from app.router import router as athlete_router
+from app.routers.files import router as files_router
+from app.routers.streaming import router as streaming_router
 
 
 logfire.configure(
@@ -23,8 +25,17 @@ async def lifespan(_fastapi_app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Athlete Service API",
+    description="API for managing athletes and their multimedia files",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Include routers
 app.include_router(athlete_router)
+app.include_router(files_router)
+app.include_router(streaming_router)
 
 
 @app.get("/health")
