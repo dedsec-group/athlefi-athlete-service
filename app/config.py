@@ -1,6 +1,7 @@
 """Configuration for the athlete service."""
 
 import os
+import asyncio
 
 from typing import Annotated
 
@@ -26,9 +27,19 @@ async_session = sessionmaker(
 
 
 async def create_db_and_tables():
-    """Create the database and tables."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all, checkfirst=True)
+    """Try to connect to DB with retries."""
+    retries = 5
+    for i in range(retries):
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all, checkfirst=True)
+            print("✅ DB connection successful.")
+            break
+        except Exception as e:
+            print(f"❌ DB connection failed (attempt {i + 1}/{retries}): {e}")
+            await asyncio.sleep(3)
+    else:
+        raise RuntimeError("Could not connect to the database after retries")
 
 
 async def get_session():
