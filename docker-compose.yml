@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: registry.dedsec.com.mx/athlefi/athlete-api:latest
+    image: registry.sparkfly.cloud/athlefi/athlete-api:local-latest
     ports:
       - "8000:8000"
     environment:
@@ -16,7 +16,7 @@ services:
       - db
 
   db:
-    image: postgres:15
+    image: postgres:17
     ports:
       - "5432:5432"
     environment:
