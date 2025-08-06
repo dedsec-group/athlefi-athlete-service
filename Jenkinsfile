@@ -1,61 +1,51 @@
 pipeline {
-  agent {
-    kubernetes {
-      yaml """
+    agent {
+        kubernetes {
+            label 'kaniko-agent'
+            defaultContainer 'kaniko'
+            yaml """
 apiVersion: v1
 kind: Pod
+metadata:
+  labels:
+    jenkins: kaniko
 spec:
   containers:
     - name: kaniko
-      image: gcr.io/kaniko-project/executor:latest
-      command: ["/bin/sh"]
-      args: ["-c", "while true; do sleep 30; done"]
-      tty: true
+      image: gcr.io/kaniko-project/executor:debug
+      command:
+        - /busybox/sh
+      args:
+        - -c
+        - while true; do sleep 30; done
       volumeMounts:
         - name: kaniko-secret
           mountPath: /kaniko/.docker
-        - name: workspace-volume
-          mountPath: /workspace
   volumes:
     - name: kaniko-secret
       secret:
         secretName: regcred
-    - name: workspace-volume
-      emptyDir: {}
 """
-    }
-  }
-
-  environment {
-    IMAGE = "registry.sparkfly.cloud/athlefi/athlete-api"
-    TAG = "latest"
-  }
-
-  stages {
-    stage('Clone Repo') {
-      steps {
-        container('kaniko') {
-          sh '''
-            mkdir -p /workspace/app
-            cp -r * /workspace/app/
-          '''
         }
-      }
     }
-
-    stage('Build and Push') {
-      steps {
-        container('kaniko') {
-          sh '''
-            /kaniko/executor \
-              --dockerfile=/workspace/app/Dockerfile \
-              --context=/workspace/app \
-              --destination=${IMAGE}:${TAG} \
-              --skip-tls-verify \
-              --insecure
-          '''
+    environment {
+        IMAGE = "harbor.sparkfly.dev/athlefi/athlete-api"
+        TAG = "v${env.BUILD_NUMBER}"
+    }
+    stages {
+        stage('Build Docker Image with Kaniko') {
+            steps {
+                container('kaniko') {
+                    sh '''
+                    /kaniko/executor \
+                      --context `pwd` \
+                      --dockerfile Dockerfile \
+                      --destination=${IMAGE}:${TAG} \
+                      --destination=${IMAGE}:latest \
+                      --verbosity=debug
+                    '''
+                }
+            }
         }
-      }
     }
-  }
 }
