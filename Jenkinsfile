@@ -1,51 +1,61 @@
 pipeline {
-    agent any
+  agent {
+    kubernetes {
+      yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: kaniko
+      image: gcr.io/kaniko-project/executor:latest
+      command:
+        - /busybox/cat
+      tty: true
+      volumeMounts:
+        - name: kaniko-secret
+          mountPath: /kaniko/.docker
+        - name: workspace-volume
+          mountPath: /workspace
+  volumes:
+    - name: kaniko-secret
+      secret:
+        secretName: regcred
+    - name: workspace-volume
+      emptyDir: {}
+"""
+    }
+  }
 
-    environment {
-        REGISTRY = "registry.sparkfly.cloud"
-        IMAGE_NAME = "athlefi/athlete-api"
-        TAG = "latest"
-        DOCKER_CREDENTIALS_ID = "regcred"  // ID del secreto de Jenkins para el login
+  environment {
+    IMAGE = "registry.sparkfly.cloud/athlefi/athlete-api"
+    TAG = "latest"
+  }
+
+  stages {
+    stage('Clone Repo') {
+      steps {
+        container('kaniko') {
+          sh '''
+            mkdir -p /workspace/app
+            cp -r * /workspace/app/
+          '''
+        }
+      }
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
+    stage('Build and Push') {
+      steps {
+        container('kaniko') {
+          sh '''
+            /kaniko/executor \
+              --dockerfile=/workspace/app/Dockerfile \
+              --context=/workspace/app \
+              --destination=${IMAGE}:${TAG} \
+              --skip-tls-verify \
+              --insecure
+          '''
         }
-
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${TAG} ."
-                }
-            }
-        }
-
-        stage('Push to Registry') {
-            steps {
-                script {
-                    docker.withRegistry("https://${REGISTRY}", "${DOCKER_CREDENTIALS_ID}") {
-                        sh "docker push ${REGISTRY}/${IMAGE_NAME}:${TAG}"
-                    }
-                }
-            }
-        }
-
-        stage('Post') {
-            steps {
-                echo "Build and push complete!"
-            }
-        }
+      }
     }
-
-    post {
-        failure {
-            echo "❌ Build failed!"
-        }
-        success {
-            echo "✅ Build succeeded!"
-        }
-    }
+  }
 }
