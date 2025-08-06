@@ -29,7 +29,7 @@ spec:
         }
     }
     environment {
-        IMAGE = "harbor.sparkfly.dev/athlefi/athlete-api"
+        IMAGE = "registry.sparkfly.cloud/athlefi/athlete-api"
         TAG = "v${env.BUILD_NUMBER}"
     }
     stages {
