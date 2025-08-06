@@ -8,8 +8,8 @@ spec:
   containers:
     - name: kaniko
       image: gcr.io/kaniko-project/executor:latest
-      command: ["/kaniko/executor"]
-      args: ["--help"]
+      command: ["/bin/sh"]
+      args: ["-c", "while true; do sleep 30; done"]
       tty: true
       volumeMounts:
         - name: kaniko-secret
