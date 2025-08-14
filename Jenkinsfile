@@ -10,10 +10,15 @@ pipeline {
         labels:
           jenkins: kaniko
       spec:
+        restartPolicy: Never
         containers:
           - name: kaniko
             image: gcr.io/kaniko-project/executor:debug
-            command: []
+            command: ["/busybox/sh", "-c", "sleep infinity"]   # <- mantener vivo
+            tty: true
+            env:
+              - name: DOCKER_CONFIG
+                value: /kaniko/.docker
             volumeMounts:
               - name: kaniko-secret
                 mountPath: /kaniko/.docker
