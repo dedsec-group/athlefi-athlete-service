@@ -30,10 +30,10 @@ pipeline {
   }
 
   options {
-      timestamps()
-      ansiColor('xterm')
-      disableConcurrentBuilds()
-      buildDiscarder(logRotator(numToKeepStr: '20'))
+    //timestamps()
+    //ansiColor('xterm')
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '20'))
   }
 
   environment {
