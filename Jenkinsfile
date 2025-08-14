@@ -86,7 +86,7 @@ pipeline {
                 --cache-repo=${CACHE_REPO} \
                 --verbosity=info \
                 --single-snapshot \
-                --compressed
+                --compression=gzip
             '''
           }
         }
@@ -107,7 +107,7 @@ pipeline {
                 --cache-repo=${CACHE_REPO} \
                 --verbosity=info \
                 --single-snapshot \
-                --compressed
+                --compression=gzip
             '''
           }
         }
@@ -135,7 +135,7 @@ pipeline {
                 --cache-repo=${CACHE_REPO} \
                 --verbosity=info \
                 --single-snapshot \
-                --compressed
+                --compression=gzip
             '''
           }
         }
