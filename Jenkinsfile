@@ -52,6 +52,8 @@ pipeline {
     SHORT_SHA  = "${env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : ''}"
     // Kaniko cache repo (same registry; create once)
     CACHE_REPO = "registry.sparkfly.cloud/athlefi/kaniko-cache"
+    // Check if the tag is a release tag
+    RELEASE_TAG = "${(GIT_REF ==~ /^v\\d+\\.\\d+\\.\\d+$/)}"
   }
 
   stages {
@@ -77,11 +79,16 @@ pipeline {
         container('kaniko') {
           retry(2) {
             sh '''
+              DESTS="--destination=${IMAGE}:${GIT_REF}"
+              if [ "${RELEASE_TAG}" = "true" ]; then
+                DESTS="$DESTS --destination=${IMAGE}:latest"
+              else
+                echo "Pre-release tag (no latest): ${GIT_REF}"
+              fi
               /kaniko/executor \
                 --context="${WORKSPACE}" \
                 --dockerfile=Dockerfile \
-                --destination=${IMAGE}:${GIT_REF} \
-                --destination=${IMAGE}:latest \
+                $DESTS \
                 --cache=true \
                 --cache-repo=${CACHE_REPO} \
                 --verbosity=info \
